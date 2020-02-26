@@ -7,7 +7,6 @@ import re
 START_SECTION = r"~~([SCHFNDA])([^~]*)~~"
 END_SECTION = r"~~/([SCHFNDA])~~"
 
-
 class OCXMetadata(Extension):
     """Python-Markdown extension for parsing OCX metadata from YAML."""
 
@@ -106,12 +105,22 @@ class OCXSectionTreeProcessor(Treeprocessor):
                 #                else:
                 # regex won't match anything else
                 # find id attribute of new section, if any
+                attr = {}
+                class_elements = []
                 if start_match.group(2):
                     # make sure id has no bad characters in it
-                    i = re.sub(self.BAD_URI_FRAG_CHARS, "", start_match.group(2))
-                    attr = {"id": i}
-                else:
-                    attr = {}
+                    tail_elements = re.split(" +", start_match.group(2))
+                    for e in tail_elements:
+                        if e.startswith('.'):
+                            e = re.sub(self.BAD_URI_FRAG_CHARS, "", e)
+                            if len(e)>0:
+                                class_elements.append(e)
+                        elif "id" not in attr:
+                            e = re.sub(self.BAD_URI_FRAG_CHARS, "", e)
+                            if len(e)> 0:
+                                attr["id"] = e
+                    if len(class_elements) > 0:
+                        attr["class"] = " ".join(class_elements)
                 # create new section
                 newsect = ET.SubElement(new_ancestors[-1], newsect_type, attr)
                 # this new section will be the new parent until we get to end marker
